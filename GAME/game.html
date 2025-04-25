@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Space Invaders - Jogo</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: black;
+      color: #00FF00;
+      font-family: 'Press Start 2P', cursive;
+      overflow: hidden;
+    }
+
+    /* Botão de Voltar ao Menu */
+    #backButton {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 40px;
+      height: 40px;
+      background-color: black;
+      color: #00FF00;
+      border: 2px solid #00FF00;
+      font-size: 18px;
+      font-family: 'Press Start 2P', cursive;
+      cursor: pointer;
+      z-index: 9999;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    #backButton:hover {
+      background-color: #00FF00;
+      color: black;
+    }
+  </style>
+</head>
+<body>
+  <!-- Botão de Voltar -->
+  <button id="backButton" onclick="goToMenu()">☰</button>
+
+  <!-- Área de jogo (pode ser canvas ou outro elemento) -->
+  <div id="gameContainer">
+    <!-- Aqui o conteúdo do jogo será renderizado via game.js -->
+  </div>
+
+  <!-- Script para voltar ao menu -->
+  <script>
+    function goToMenu() {
+      window.location.href = "../index.html";
+    }
+  </script>
+
+  <!-- Carregando o script do jogo -->
+  <script src="game.js"></script>
+</body>
+</html>
