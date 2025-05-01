@@ -25,6 +25,10 @@ let enemiesEscaped = 7;
 let gameOver = false;
 let gamePaused = false;
 
+let timerStarted = false;
+let timer = 5; // Alterado para 5 segundos
+let timerInterval;
+
 // ALT + P painel com senha
 window.addEventListener('keydown', (e) => {
   if (e.altKey && e.key === 'p') {
@@ -315,6 +319,26 @@ function showExplosionAndEnd() {
   }, 1000);
 }
 
+function startTimer() {
+  if (timerStarted) return; // Evita iniciar o timer mais de uma vez
+
+  timerStarted = true;
+
+  // Imprime o timer no console
+  console.log("Iniciando timer de 5 segundos...");
+
+  timerInterval = setInterval(() => {
+    console.log(`Tempo restante: ${timer} segundos`);
+    timer--;
+
+    if (timer <= 0) {
+      clearInterval(timerInterval);
+      console.log("Timer finalizado!");
+    }
+  }, 1000);
+}
+
+// Atualizando a verificação do score
 function gameLoop() {
   if (gameOver || gamePaused) return;
 
@@ -327,13 +351,17 @@ function gameLoop() {
   drawScore();
   drawStats();
 
+  if (score >= 50 && !timerStarted) {
+    startTimer();
+  }
+
   requestAnimationFrame(gameLoop);
 }
 
 gameLoop();
 
 setInterval(() => {
-  if (!gameOver && !gamePaused) spawnEnemy();
+  if (!gameOver && !gamePaused && score < 50) spawnEnemy();
 }, 1500);
 
 canvas.addEventListener('click', () => {
