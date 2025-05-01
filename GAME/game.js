@@ -26,10 +26,9 @@ let gameOver = false;
 let gamePaused = false;
 
 let timerStarted = false;
-let timer = 5; // Alterado para 5 segundos
+let timer = 5;
 let timerInterval;
 
-// ALT + P painel com senha
 window.addEventListener('keydown', (e) => {
   if (e.altKey && e.key === 'p') {
     const senha = prompt("Digite a senha:");
@@ -37,7 +36,7 @@ window.addEventListener('keydown', (e) => {
       const novoScore = prompt("Digite o novo valor do score:");
       const novoScoreNum = parseInt(novoScore);
       if (!isNaN(novoScoreNum)) {
-        score = novoScoreNum;
+        score = Math.min(novoScoreNum, 50); // Limita o score no painel também
         alert("Score atualizado com sucesso!");
       } else {
         alert("Valor inválido.");
@@ -45,6 +44,18 @@ window.addEventListener('keydown', (e) => {
     } else {
       alert("Senha incorreta!");
     }
+    return;
+  }
+
+  if (gamePaused) return;
+
+  if (e.key === ' ' || e.key === 'Space') {
+    createProjectile();
+  }
+
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+    window.location.href = "../index.html";
   }
 });
 
@@ -60,7 +71,6 @@ function createProjectile() {
   projectiles.push(projectile);
 }
 
-// Atualizado aqui
 function spawnEnemy() {
   let enemy;
   const strongEnemyCondition = score >= 30 && normalEnemyCount >= 5;
@@ -151,19 +161,6 @@ window.addEventListener('mousemove', (e) => {
   }
 });
 
-window.addEventListener('keydown', (e) => {
-  if (gamePaused) return;
-
-  if (e.key === ' ' || e.key === 'Space') {
-    createProjectile();
-  }
-
-  if (e.key === 'Backspace') {
-    e.preventDefault();
-    window.location.href = "../index.html";
-  }
-});
-
 window.addEventListener('mousedown', (e) => {
   if (!gamePaused && e.button === 0) {
     createProjectile();
@@ -245,13 +242,13 @@ function drawEnemies() {
           projectiles.splice(j, 1);
           if (e.hitsTaken >= e.health) {
             enemies.splice(i, 1);
-            score++;
+            if (score < 50) score++;
             i--;
           }
         } else {
           enemies.splice(i, 1);
           projectiles.splice(j, 1);
-          score++;
+          if (score < 50) score++;
           i--;
         }
         break;
@@ -320,11 +317,9 @@ function showExplosionAndEnd() {
 }
 
 function startTimer() {
-  if (timerStarted) return; // Evita iniciar o timer mais de uma vez
+  if (timerStarted) return;
 
   timerStarted = true;
-
-  // Imprime o timer no console
   console.log("Iniciando timer de 5 segundos...");
 
   timerInterval = setInterval(() => {
@@ -338,7 +333,6 @@ function startTimer() {
   }, 1000);
 }
 
-// Atualizando a verificação do score
 function gameLoop() {
   if (gameOver || gamePaused) return;
 
