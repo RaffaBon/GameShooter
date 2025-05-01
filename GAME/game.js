@@ -1,13 +1,11 @@
-// Cria o canvas do jogo
 const canvas = document.createElement('canvas');
 const ctx = canvas.getContext('2d');
 document.body.appendChild(canvas);
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-canvas.style.cursor = 'none'; // Esconde o cursor do mouse
+canvas.style.cursor = 'none';
 
-// Define a entidade do jogador como um quadrado branco
 const player = {
   size: 40,
   x: canvas.width / 2 - 20,
@@ -16,20 +14,36 @@ const player = {
   speed: 10
 };
 
-// Cria arrays para projéteis e inimigos
 const projectiles = [];
 const enemies = [];
 const enemyProjectiles = [];
-let normalEnemyCount = 0; // Para contar inimigos normais e gerar inimigos fortes
+let normalEnemyCount = 0;
 
-// Contadores
 let score = 0;
 let lives = 5;
 let enemiesEscaped = 7;
 let gameOver = false;
 let gamePaused = false;
 
-// Função para criar projéteis
+// ALT + P painel com senha
+window.addEventListener('keydown', (e) => {
+  if (e.altKey && e.key === 'p') {
+    const senha = prompt("Digite a senha:");
+    if (senha === '5595') {
+      const novoScore = prompt("Digite o novo valor do score:");
+      const novoScoreNum = parseInt(novoScore);
+      if (!isNaN(novoScoreNum)) {
+        score = novoScoreNum;
+        alert("Score atualizado com sucesso!");
+      } else {
+        alert("Valor inválido.");
+      }
+    } else {
+      alert("Senha incorreta!");
+    }
+  }
+});
+
 function createProjectile() {
   const projectile = {
     x: player.x + player.size / 2 - 2.5,
@@ -37,38 +51,48 @@ function createProjectile() {
     width: 5,
     height: 15,
     color: '#FFFFFF',
-    speed: 7 // Aumento da velocidade dos projéteis do jogador
+    speed: 7
   };
   projectiles.push(projectile);
 }
 
-// Criar inimigos no topo com posição aleatória
+// Atualizado aqui
 function spawnEnemy() {
   let enemy;
-  if (score >= 30 && normalEnemyCount >= 5) {
-    // Inimigos fortes após o score 30
+  const strongEnemyCondition = score >= 30 && normalEnemyCount >= 5;
+
+  if (strongEnemyCondition) {
+    let health = 3;
+    let canShoot = false;
+
+    if (score >= 40) {
+      health = 6;
+      canShoot = score >= 45;
+    }
+
     enemy = {
       x: Math.random() * (canvas.width - 40),
       y: -40,
       size: 40,
-      speed: score >= 25 ? 3 : 2,
-      color: 'darkred', // Cor mais escura
-      health: 3, // Precisa ser atingido 3 vezes para ser destruído
-      hitsTaken: 0, // Para contar quantos projéteis atingiram o inimigo
-      canShoot: false // Não atiram
+      speed: 2,
+      color: 'darkred',
+      health: health,
+      hitsTaken: 0,
+      canShoot: canShoot,
+      shootFrequency: 0.002
     };
-    normalEnemyCount = 0; // Resetando contador de inimigos normais
+
+    normalEnemyCount = 0;
   } else {
-    // Inimigos normais
     enemy = {
       x: Math.random() * (canvas.width - 40),
       y: -40,
       size: 40,
       speed: score >= 25 ? 3 : 2,
       color: 'red',
-      health: 1, // Apenas 1 acerto para destruir
-      hitsTaken: 0, // Não há necessidade de rastrear hits para inimigos normais
-      canShoot: score >= 15, // Inimigos atiram se o score for >= 15
+      health: 1,
+      hitsTaken: 0,
+      canShoot: score >= 15,
       shootFrequency: score >= 25 ? 0.01 : 0.005
     };
     normalEnemyCount++;
@@ -77,7 +101,6 @@ function spawnEnemy() {
   enemies.push(enemy);
 }
 
-// Criação de projéteis inimigos
 function createEnemyProjectile(enemy) {
   const projectile = {
     x: enemy.x + enemy.size / 2 - 2.5,
@@ -85,12 +108,11 @@ function createEnemyProjectile(enemy) {
     width: 5,
     height: 15,
     color: 'red',
-    speed: 6 // Aumento da velocidade dos projéteis dos inimigos
+    speed: 6
   };
   enemyProjectiles.push(projectile);
 }
 
-// Lógica de colisão entre dois quadrados ou retângulos
 function isColliding(a, b) {
   const aWidth = a.width || a.size;
   const aHeight = a.height || a.size;
@@ -105,13 +127,11 @@ function isColliding(a, b) {
   );
 }
 
-// Pointer lock
 let pointerLocked = false;
 document.addEventListener('pointerlockchange', () => {
   pointerLocked = document.pointerLockElement === canvas;
 });
 
-// Mouse move
 window.addEventListener('mousemove', (e) => {
   if (!gamePaused) {
     if (pointerLocked) {
@@ -127,7 +147,6 @@ window.addEventListener('mousemove', (e) => {
   }
 });
 
-// Disparos e sair com backspace
 window.addEventListener('keydown', (e) => {
   if (gamePaused) return;
 
@@ -147,13 +166,11 @@ window.addEventListener('mousedown', (e) => {
   }
 });
 
-// Desenhar jogador
 function drawPlayer() {
   ctx.fillStyle = player.color;
   ctx.fillRect(player.x, player.y, player.size, player.size);
 }
 
-// Desenhar projéteis
 function drawProjectiles() {
   for (let i = 0; i < projectiles.length; i++) {
     const p = projectiles[i];
@@ -167,24 +184,20 @@ function drawProjectiles() {
   }
 }
 
-// Desenhar projéteis inimigos
 function updateEnemyProjectiles() {
   for (let i = 0; i < enemyProjectiles.length; i++) {
     const p = enemyProjectiles[i];
     p.y += p.speed;
 
-    // Desenhar projétil
     ctx.fillStyle = p.color;
     ctx.fillRect(p.x, p.y, p.width, p.height);
 
-    // Chegou ao chão
     if (p.y > canvas.height) {
       enemyProjectiles.splice(i, 1);
       i--;
       continue;
     }
 
-    // Colisão com jogador
     if (isColliding(p, player)) {
       lives--;
       enemyProjectiles.splice(i, 1);
@@ -197,7 +210,6 @@ function updateEnemyProjectiles() {
   }
 }
 
-// Desenhar inimigos
 function drawEnemies() {
   for (let i = 0; i < enemies.length; i++) {
     const e = enemies[i];
@@ -219,24 +231,21 @@ function drawEnemies() {
       i--;
       checkGameOver();
       continue;
-
     }
 
     for (let j = 0; j < projectiles.length; j++) {
       const p = projectiles[j];
       if (isColliding(e, p)) {
-        // Se o inimigo for forte
         if (e.health > 1) {
-          e.hitsTaken++; // Aumenta o contador de acertos
-          projectiles.splice(j, 1); // Remove o projétil
-          if (e.hitsTaken >= 3) {
-            // Se o inimigo for atingido 3 vezes
-            enemies.splice(i, 1); // Destrói inimigo
+          e.hitsTaken++;
+          projectiles.splice(j, 1);
+          if (e.hitsTaken >= e.health) {
+            enemies.splice(i, 1);
             score++;
             i--;
           }
         } else {
-          enemies.splice(i, 1); // Destrói inimigo
+          enemies.splice(i, 1);
           projectiles.splice(j, 1);
           score++;
           i--;
@@ -245,14 +254,12 @@ function drawEnemies() {
       }
     }
 
-    // Inimigos atirando só a partir do score 15
-    if (score >= 15 && Math.random() < e.shootFrequency) {
+    if (e.canShoot && Math.random() < e.shootFrequency) {
       createEnemyProjectile(e);
     }
   }
 }
 
-// Desenhar score
 function drawScore() {
   ctx.fillStyle = '#00FF00';
   ctx.font = '16px "Press Start 2P"';
@@ -260,21 +267,15 @@ function drawScore() {
   ctx.fillText(`SCORE: ${score}`, canvas.width - 20, 40);
 }
 
-// Novo: Desenhar contadores no canto inferior esquerdo
 function drawStats() {
   ctx.fillStyle = '#00FF00';
   ctx.font = '14px "Press Start 2P"';
-  
-  // LIVES no canto inferior esquerdo
   ctx.textAlign = 'left';
   ctx.fillText(`LIVES: ${lives}`, 20, canvas.height - 20);
-
-  // ESCAPED no canto inferior direito
   ctx.textAlign = 'right';
   ctx.fillText(`ESCAPED: ${enemiesEscaped}`, canvas.width - 20, canvas.height - 20);
 }
 
-// Verifica se é game over
 function checkGameOver() {
   if (gameOver) return;
 
@@ -286,14 +287,13 @@ function checkGameOver() {
       showExplosionAndEnd();
     } else {
       setTimeout(() => {
-        alert(`Game Over! Pontuação Final: ${score}`);  // Exibe a pontuação no alert
+        alert(`Game Over! Pontuação Final: ${score}`);
         window.location.href = "../index.html";
       }, 100);
     }
   }
 }
 
-// Mostra explosão com gif
 function showExplosionAndEnd() {
   const playerElement = document.querySelector('canvas');
   playerElement.style.visibility = 'hidden';
@@ -310,12 +310,11 @@ function showExplosionAndEnd() {
 
   setTimeout(() => {
     explosion.remove();
-    alert(`Game Over! Pontuação Final: ${score}`);  // Agora exibe a pontuação após a explosão
+    alert(`Game Over! Pontuação Final: ${score}`);
     window.location.href = "../index.html";
-  }, 1000); // Espera 1 segundo antes de exibir o alerta
+  }, 1000);
 }
 
-// Loop do jogo
 function gameLoop() {
   if (gameOver || gamePaused) return;
 
@@ -324,9 +323,9 @@ function gameLoop() {
   drawPlayer();
   drawProjectiles();
   drawEnemies();
-  updateEnemyProjectiles(); // Atualiza e desenha os projéteis dos inimigos
+  updateEnemyProjectiles();
   drawScore();
-  drawStats(); // <<< novo contador de vidas e escapados
+  drawStats();
 
   requestAnimationFrame(gameLoop);
 }
@@ -335,7 +334,7 @@ gameLoop();
 
 setInterval(() => {
   if (!gameOver && !gamePaused) spawnEnemy();
-}, 1500); // Normal e inimigos fortes a cada 1.5 segundos
+}, 1500);
 
 canvas.addEventListener('click', () => {
   canvas.requestPointerLock();
