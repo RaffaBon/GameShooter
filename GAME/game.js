@@ -17,6 +17,7 @@ const player = {
 const projectiles = [];
 const enemies = [];
 const enemyProjectiles = [];
+const rainProjectiles = [];
 let normalEnemyCount = 0;
 
 let score = 0;
@@ -26,8 +27,12 @@ let gameOver = false;
 let gamePaused = false;
 
 let timerStarted = false;
+let rainActive = false;
 let timer = 5;
 let timerInterval;
+
+let isShaking = false;
+let shakeInterval;
 
 window.addEventListener('keydown', (e) => {
   if (e.altKey && e.key === 'p') {
@@ -36,8 +41,7 @@ window.addEventListener('keydown', (e) => {
       const novoScore = prompt("Digite o novo valor do score:");
       const novoScoreNum = parseInt(novoScore);
       if (!isNaN(novoScoreNum)) {
-        score = Math.min(novoScoreNum, 50); // Limita o score no painel também
-        alert("Score atualizado com sucesso!");
+        score = Math.min(novoScoreNum, 50);
       } else {
         alert("Valor inválido.");
       }
@@ -125,6 +129,43 @@ function createEnemyProjectile(enemy) {
     speed: 6
   };
   enemyProjectiles.push(projectile);
+}
+
+function createRainProjectile() {
+  const projectile = {
+    x: Math.random() * (canvas.width - 5),
+    y: 0,
+    width: 5,
+    height: 15,
+    color: 'red',
+    speed: 6
+  };
+  rainProjectiles.push(projectile);
+}
+
+function updateRainProjectiles() {
+  for (let i = 0; i < rainProjectiles.length; i++) {
+    const p = rainProjectiles[i];
+    p.y += p.speed;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x, p.y, p.width, p.height);
+
+    if (p.y > canvas.height) {
+      rainProjectiles.splice(i, 1);
+      i--;
+      continue;
+    }
+
+    if (isColliding(p, player)) {
+      lives--;
+      rainProjectiles.splice(i, 1);
+      i--;
+      if (lives <= 0) {
+        gameOver = true;
+        showExplosionAndEnd();
+      }
+    }
+  }
 }
 
 function isColliding(a, b) {
@@ -316,19 +357,78 @@ function showExplosionAndEnd() {
   }, 1000);
 }
 
+function startScreenShake(duration = 3000, intensity = 5) {
+  if (isShaking) return;
+  isShaking = true;
+
+  shakeInterval = setInterval(() => {
+    const offsetX = (Math.random() - 0.5) * intensity * 2;
+    const offsetY = (Math.random() - 0.5) * intensity * 2;
+    canvas.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+  }, 50);
+
+  setTimeout(() => {
+    stopScreenShake();
+  }, duration);
+}
+
+function stopScreenShake() {
+  clearInterval(shakeInterval);
+  canvas.style.transform = 'translate(0px, 0px)';
+  isShaking = false;
+}
+
 function startTimer() {
   if (timerStarted) return;
 
   timerStarted = true;
+  timer = 5;
+
   console.log("Iniciando timer de 5 segundos...");
 
   timerInterval = setInterval(() => {
     console.log(`Tempo restante: ${timer} segundos`);
+
+    if (timer === 4) {
+      startScreenShake(3000);
+    }
+
+    if (timer === 0) {
+      clearInterval(timerInterval);
+      stopScreenShake();
+      startRainPhase();
+    }
+
+    timer--;
+  }, 1000);
+}
+
+function startRainPhase() {
+  rainActive = true;
+  console.log("Chuva de projéteis iniciada!");
+
+  const rainDuration = 10000; // 10 segundos
+  const rainInterval = setInterval(() => {
+    if (rainActive) createRainProjectile();
+  }, 100);
+
+  setTimeout(() => {
+    clearInterval(rainInterval);
+    rainActive = false;
+    console.log("Chuva de projéteis finalizada. Iniciando timer de 3 segundos...");
+    startCooldownTimer();
+  }, rainDuration);
+}
+
+function startCooldownTimer() {
+  timer = 3;
+  timerInterval = setInterval(() => {
+    console.log(`Cooldown: ${timer} segundos restantes`);
     timer--;
 
-    if (timer <= 0) {
+    if (timer < 0) {
       clearInterval(timerInterval);
-      console.log("Timer finalizado!");
+      console.log("Fim do cooldown.");
     }
   }, 1000);
 }
@@ -342,6 +442,7 @@ function gameLoop() {
   drawProjectiles();
   drawEnemies();
   updateEnemyProjectiles();
+  updateRainProjectiles();
   drawScore();
   drawStats();
 
