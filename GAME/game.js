@@ -403,14 +403,77 @@ function startTimer() {
   }, 1000);
 }
 
+function createRainProjectile(angle = 90) {
+  const radians = (angle * Math.PI) / 180;
+  const speed = 6;
+
+  const projectile = {
+    x: Math.random() * (canvas.width - 5),
+    y: 0,
+    width: 5,
+    height: 15,
+    color: 'red',
+    speedX: Math.cos(radians) * speed,
+    speedY: Math.sin(radians) * speed
+  };
+
+  rainProjectiles.push(projectile);
+}
+
+function updateRainProjectiles() {
+  for (let i = 0; i < rainProjectiles.length; i++) {
+    const p = rainProjectiles[i];
+    p.x += p.speedX;
+    p.y += p.speedY;
+
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x, p.y, p.width, p.height);
+
+    if (p.y > canvas.height || p.x < 0 || p.x > canvas.width) {
+      rainProjectiles.splice(i, 1);
+      i--;
+      continue;
+    }
+
+    if (isColliding(p, player)) {
+      lives--;
+      rainProjectiles.splice(i, 1);
+      i--;
+      if (lives <= 0) {
+        gameOver = true;
+        showExplosionAndEnd();
+      }
+    }
+  }
+}
+
 function startRainPhase() {
   rainActive = true;
   console.log("Chuva de projéteis iniciada!");
 
-  const rainDuration = 10000; // 10 segundos
+  const rainDuration = 15000; // 15 segundos
+  let rainTick = 0;
+
   const rainInterval = setInterval(() => {
-    if (rainActive) createRainProjectile();
-  }, 100);
+    if (!rainActive) return;
+
+    rainTick++;
+
+    if (rainTick % 2 === 0) {
+      // Fase com brechas centrais
+      createRainProjectile(88);
+      createRainProjectile(92);
+    } else {
+      // Fase mais aberta, mas com diagonais  
+      createRainProjectile(80);
+      createRainProjectile(100);
+    }
+
+    // Chance de abrir brechas ocasionais no meio
+    if (Math.random() < 0.3) {
+      createRainProjectile(90);
+    }
+  }, 130); // frequencia dos tiros
 
   setTimeout(() => {
     clearInterval(rainInterval);
@@ -419,6 +482,8 @@ function startRainPhase() {
     startCooldownTimer();
   }, rainDuration);
 }
+
+
 
 function startCooldownTimer() {
   timer = 3;
